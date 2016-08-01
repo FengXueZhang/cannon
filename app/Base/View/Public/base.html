@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+<block name="web-header">
+  	<head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+		<title><block name="web-title">{:C('WEB_TITLE')}</block></title>
+        <block name="tpl-plugin">{// 这里需要额外加载的插件 }</block>
+        <script type="text/javascript">
+            document.addEventListener('WeixinJSBridgeReady', function onBridgeReady() {  
+                WeixinJSBridge.call('hideOptionMenu');  
+            });
+        </script>
+        <link rel="stylesheet" type="text/css" href="__PLUGIN__/frozen/css/frozen.css">
+        <link rel="stylesheet" type="text/css" href="__PLUGIN__/css/common.css">
+        <link rel="stylesheet" type="text/css" href="__PLUGIN__/css/digilinx-icon.css">
+        <link rel="stylesheet" type="text/css" href="__PLUGIN__/css/jquery-mobile-fluid960.css">
+        <script type="text/javascript" src="__PLUGIN__/weixinbiaoqingbao.js"></script>
+	</head>
+</block>
+<block name="web-body">
+    <body  style="background-color: #FBF9FE">
+        <block name="tpl-header">
+            {// 页面标题 }
+        </block>
+        <block name="tpl-body">
+            {// 中间内容 }
+        </block>
+        <block name="tpl-footer">
+            {// 页尾 }
+        </block>
+    </body>
+</block>
+
+<script type="text/javascript" src="__PLUGIN__/zepto.min.js"></script>
+<script type="text/javascript" src="__PLUGIN__/frozen/js/frozen.min.js"></script>
+<script type="text/javascript" src="__APP_STYLE__/js/global.js"></script>
+
+<!-- <script type='text/javascript' src="http://res.wx.qq.com/open/js/jweixin-1.1.0.js"></script> -->
+<block name="tpl-script">{// 脚本请写在这个标签里 }</block>
+
+<block name="web-footer">
+{// 页脚 }
+</block>
+
+</html>

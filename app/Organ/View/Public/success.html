@@ -1,0 +1,31 @@
+<extend name="Public:base" />
+
+<block name="top">
+<div class="container_12"> <div class="grid_3">&nbsp;</div>
+
+    <div class="grid_6" align="center">信息提示</div>
+
+</div>
+</block>
+
+<block name="content">
+	<div >
+        <div align="center" style="padding:30px 0px;"><img src="__PUBLIC__/common/image/zq.jpg" width="100px" ></div>
+        <div class="digilinx-content-well-dotline"></div>
+        <div align="center" style="font-size:16px;color:#fa6949;padding:40px 0px;"><?php echo($message); ?></div>
+        <div align="center" style="font-size:14px; margin-top:5%; color:#777">
+			<a id="href" id="btn-now" href="<?php echo($jumpUrl); ?>">立即跳转</a> <b id="wait"><?php echo($waitSecond); ?></b> 秒后页面将自动跳转
+		</div>
+	</div>
+<script>
+var wait = document.getElementById('wait'),href = document.getElementById('href').href;
+var interval = setInterval(function(){
+ 	var time = --wait.innerHTML;
+ 	if(time <= 0) {
+ 		location.href = href;
+ 		clearInterval(interval);
+ 	};
+ }, 1000);
+</script>
+</block>
+

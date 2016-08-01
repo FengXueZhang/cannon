@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>登录</title>
+<script type="text/javascript" src="__STYLE__/plugin/DragonGate.js"></script>
+</head>
+
+<body>
+<form method="post" name="o365login" id="o365login" action="{$url}">
+<input type="hidden" name="DGToken" value="{$getDgToken}">
+<!--<input type="submit" value="提交">-->
+</form>
+</body>
+</html>
+<script type="text/javascript">
+function validate(){
+	document.getElementById('o365login').submit();
+}
+window.load=validate();
+</script>

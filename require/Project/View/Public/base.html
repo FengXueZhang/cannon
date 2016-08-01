@@ -1,0 +1,227 @@
+<!doctype html>
+<html>
+<block name="web-header">
+  	<head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+		<title><block name="web-title">{:C('WEB_TITLE')}</block></title>
+        <block name="tpl-plugin">{// 这里需要额外加载的插件 }</block>
+        <script type="text/javascript">
+            document.addEventListener('WeixinJSBridgeReady', function onBridgeReady() {  
+                WeixinJSBridge.call('hideOptionMenu');  
+            });
+        </script>
+        <script type="text/javascript" src="__STYLE__/plugin/bootup.min.js"></script>
+        <script type="text/javascript">
+        var files = new Array(
+                "__STYLE__/plugin/weui/dist/style/weui.min.css", 
+                "__STYLE__/plugin/zepto.min.js", 
+                "__STYLE__/plugin/laytpl.min.js"
+            );
+
+        var bootup_options = {
+            refresh:false
+        };
+
+        new BootUp(files, bootup_options);
+        </script>
+	</head>
+</block>
+<block name="web-body">
+    <body  style="background-color: #FBF9FE">
+        <block name="tpl-header">
+            {// 页面标题 }
+        </block>
+        <block name="tpl-body">
+            {// 中间内容 }
+        </block>
+        <block name="tpl-footer">
+            {// 页尾 }
+        </block>
+        <!-- 加载中层...start -->
+        <div id="loadingToast" class="weui_loading_toast" style="display:none;">
+            <div class="weui_mask_transparent"></div>
+            <div class="weui_toast">
+                <div class="weui_loading">
+                    <!-- :) -->
+                    <div class="weui_loading_leaf weui_loading_leaf_0"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_1"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_2"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_3"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_4"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_5"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_6"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_7"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_8"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_9"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_10"></div>
+                    <div class="weui_loading_leaf weui_loading_leaf_11"></div>
+                </div>
+                <p class="weui_toast_content"></p>
+            </div>
+        </div>
+        <!-- 加载中层...end -->
+
+        <!-- 确定框...start-->
+        <div id="dialogConfirm" class="weui_dialog_confirm" style="display:none;">
+            <div class="weui_mask"></div>
+            <div class="weui_dialog">
+                <div class="weui_dialog_hd"><strong class="weui_dialog_title">温馨提示</strong></div>
+                <div class="weui_dialog_bd"></div>
+                <div class="weui_dialog_ft">
+                    <a href="javascript:;" class="weui_btn_dialog default">取消</a>
+                    <a href="javascript:;" class="weui_btn_dialog primary">确定</a>
+                </div>
+            </div>
+        </div>
+        <!-- 确定框...end-->
+
+        <!-- 消息框...start-->
+        <div id="dialogAlert" class="weui_dialog_alert" style="display:none;">
+            <div class="weui_mask"></div>
+            <div class="weui_dialog">
+                <div class="weui_dialog_hd"><strong class="weui_dialog_title">消息提示</strong></div>
+                <div class="weui_dialog_bd"></div>
+                <div class="weui_dialog_ft">
+                    <a href="javascript:;" class="weui_btn_dialog primary">确定</a>
+                </div>
+            </div>
+        </div>
+        <!-- 消息框...end-->
+
+        <!-- tip...start-->
+        <div id="toast" style="display: none;">
+            <div class="weui_mask_transparent"></div>
+            <div class="weui_toast">
+                <i class="weui_icon_toast"></i>
+                <p class="weui_toast_content"></p>
+            </div>
+        </div>
+        <!-- tip...end-->
+        
+        <script type="text/javascript">
+        /**
+         * 轻量级消息展示
+         *
+         * @author Cui
+         *
+         * @date   2015-12-24
+         *
+         * @param  {string}   info 展示的消息
+         */
+        function tip_info(info){ 
+            $('#toast .weui_toast_content').text(info);
+            $('#toast').show();
+            var timedo = window.setTimeout(function(){
+                $('#toast').hide();
+            }, 2000);
+            $('body').one('click', function(){
+                $('#toast').hide();
+                window.clearTimeout(timedo);
+            })
+        }
+
+        /**
+         * 关闭微信页面
+         */
+        function close_window()
+        {
+            if (typeof(WeixinJSBridge) != 'undefined') {
+                WeixinJSBridge.call("closeWindow");
+            } else {
+                window.close();
+            }
+        }
+
+
+        /**
+         * 手机端加载层
+         *
+         * @author Cui
+         *
+         * @date   2015-07-21
+         *
+         * @param  {string}   text 提示信息, 缺省为加载中....
+         *
+         * @return {void}
+         */
+        function loading(text)
+        {
+            var text = text || '加载中...';
+            $('#loadingToast').show();
+            $('#loadingToast .weui_toast_content').text(text);
+        }
+
+        /**
+         * 结束加载层
+         *
+         * @author Cui
+         *
+         * @date   2015-07-21
+         *
+         * @return {void}
+         */
+        function loading_close()
+        {
+           $('#loadingToast').hide();
+        }
+
+        /**
+         * 手机端          
+         *
+         * @author Cui
+         *
+         * @date   2015-07-21       
+         *
+         * @param  {string}   info 提示信息
+         * @param  {callback} yesCallBack 选填 确定之后的回调函数
+         *
+         * @return {void}
+         */
+        function alert_info(info, yesCallBack)
+        {
+            $('#dialogAlert .weui_dialog_bd').text(info);
+            $('#dialogAlert').show();
+            $('#dialogAlert .weui_dialog_ft>a').on('click', function(){
+                yesCallBack && yesCallBack();
+                $('#dialogAlert').hide();
+            })
+        }
+
+        /**
+         * 手机端 确认框
+         *
+         * @author Cui
+         *
+         * @date   2015-07-21
+         *
+         * @param  {string}     info         提示信息
+         * @param  {callback}   yesCallBack  确定回调函数
+         * @param  {callback}   noCallBack   取消回调函数
+         *
+         * @return {void}
+         */
+        function confirm_info(info, yesCallBack, noCallBack)
+        {
+            $('#dialogConfirm .weui_dialog_bd').text(info);
+            $('#dialogConfirm').show();
+            $('#dialogConfirm .weui_dialog_ft>a').eq(1).on('click', function(){
+                yesCallBack && yesCallBack();
+                $('#dialogConfirm').hide();
+            })
+
+            $('#dialogConfirm .weui_dialog_ft>a').eq(0).on('click', function(){
+                noCallBack && noCallBack();
+                $('#dialogConfirm').hide();
+            })
+        }
+        </script>
+    </body>
+<block name="tpl-script">{// 脚本请写在这个标签里 }</block>
+</block>
+
+<block name="web-footer">
+{// 页脚 }
+</block>
+
+</html>
