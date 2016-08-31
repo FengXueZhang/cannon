@@ -1178,3 +1178,373 @@ function get_domain_param()
 
     return $httpHost[0];
 }
+
+/**
+*
+* 压缩用户头像
+*
+* @author XueFeng
+*
+* @return base_encode $im 返回加密后的图片二进制    
+*
+**/
+function setUserImage($url)
+{
+    $resource = getBaseodeByUrl($url);
+    $resource = base64_decode($resource);
+    $bg_w       = 139; // 背景图片宽度  
+    $bg_h       = 139; // 背景图片高度  
+
+    $background = imagecreatetruecolor($bg_w,$bg_h);// 背景图片  
+    $color      = imagecolorallocate($background, 202, 201, 201);
+    // 为真彩色画布创建白色背景，再设置为透明  
+    imagefill($background, 0, 0, $color);  
+    imageColorTransparent($background, $color);
+
+    $resource   = imagecreatefromstring($resource);
+    imagecopyresized($background, $resource, 0, 0, 0, 0, 139, 139,imagesx($resource),imagesy($resource));
+
+    $image = "/tmp/image_".rand(1,10000000).".jpg";
+    imagejpeg($background, $image,100);
+
+    $file = file_get_contents($image);
+    unlink($image);
+    return base64_encode($file);
+}
+/**
+*
+* 获取图片，返回图片信息
+*
+* @author XueFeng
+*
+* @param string $src 图片路径   
+*
+* @return resource $im 返回图片信息    
+*
+**/
+function getImageInfo($src)     
+{     
+    return getimagesize($src);
+}
+
+/**
+* 创建图片，返回资源类型
+*
+* @author XueFeng
+*
+* @param string $src 图片路径
+*
+* @return resource $im 返回资源类型
+* 
+**/
+function create($src)
+{
+    $info = getImageInfo($src);
+
+    switch ($info[2])
+    {
+        case 1:
+            $im = imagecreatefromgif($src);
+            break;
+        case 2:
+            $im = imagecreatefromjpeg($src);
+            break;
+        case 3:
+            $im = imagecreatefrompng($src);
+            break;
+    }
+    return $im;     
+}     
+
+/**
+* 缩略图主函数
+*
+* @author XueFeng
+*
+* @param string $src 图片路径
+* @param int    $w   缩略图宽度
+* @param int    $h   缩略图高度
+*
+* @return mixed 返回缩略图路径
+**/
+function resize($src,$w,$h)
+{
+    $temp     = pathinfo($src);
+    $name     = $temp["basename"];//文件名
+    $savepath = "/tmp/" . $name . ".jpg";//缩略图保存路径,新的文件名为*.jpg
+    
+    //获取图片的基本信息
+    $info   = getImageInfo($src);
+
+    $width  = $info[0];//获取图片宽度
+    $height = $info[1];//获取图片高度
+    $per1   = round($width/$height,2);//计算原图长宽比
+    $per2   = round($w/$h,2);//计算缩略图长宽比
+    
+    //计算缩放比例     
+    if($per1 > $per2 || $per1 == $per2) {
+        //原图长宽比大于或者等于缩略图长宽比，则按照宽度优先
+        $per  = $w/$width;
+    }
+    if($per1 < $per2) {
+        //原图长宽比小于缩略图长宽比，则按照高度优先
+        $per  = $h/$height;
+    }
+    $temp_w   = intval($width*$per);//计算原图缩放后的宽度
+    $temp_h   = intval($height*$per);//计算原图缩放后的高度
+    $temp_img = imagecreatetruecolor($temp_w,$temp_h);//创建画布
+    $im       = create($src);
+    imagecopyresampled($temp_img,$im,0,0,0,0,$temp_w,$temp_h,$width,$height);
+    
+    if($per1>$per2) {
+        imagejpeg($temp_img,$savepath, 100);
+        imagedestroy($im);
+        return addBg($savepath,$w,$h,"w");
+        //宽度优先，在缩放之后高度不足的情况下补上背景
+    }
+    if($per1 == $per2) {
+        imagejpeg($temp_img,$savepath, 100);
+        imagedestroy($im);
+        return $savepath;
+        //等比缩放
+    }
+    if($per1<$per2) {
+        imagejpeg($temp_img,$savepath, 100);
+        imagedestroy($im);
+        return addBg($savepath,$w,$h,"h");
+        //高度优先，在缩放之后宽度不足的情况下补上背景
+    }
+}
+
+/**
+* 添加背景
+* @author XueFeng
+* @param string $src 图片路径
+* @param int $w 背景图像宽度
+* @param int $h 背景图像高度
+* @param String $first 决定图像最终位置的，w 宽度优先 h 高度优先 wh:等比
+* @return 返回加上背景的图片
+* **/
+function addBg($src,$w,$h,$fisrt = "w")
+{
+    $bg     = imagecreatetruecolor($w,$h);
+    $white  = imagecolorallocate($bg,255,255,255);
+    imagefill($bg,0,0,$white);//填充背景
+
+    //获取目标图片信息
+    $info   = getImageInfo($src);
+    $width  = $info[0];//目标图片宽度
+    $height = $info[1];//目标图片高度
+    $img    = create($src);
+    if($fisrt == "wh") {
+        //等比缩放
+        return $src;
+    } else {     
+        if($fisrt == "w") {     
+            $x = 0;     
+            $y = ($h-$height)/2;//垂直居中
+        }
+        if($fisrt == "h")
+        {
+            $x = ($w-$width)/2;//水平居中
+            $y = 0;
+        }
+        imagecopymerge($bg,$img,$x,$y,0,0,$width,$height,100);     
+        imagejpeg($bg,$src,100);     
+        imagedestroy($bg);     
+        imagedestroy($img);     
+        return $src;     
+    }
+}
+
+/**
+* 获取微信头像二进制
+* @author XueFeng
+* @param string $url 图片路径
+* @return 图片加密后的二进制
+* **/
+function getBaseodeByUrl($url)
+{
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_NOBODY, false);
+    // curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+
+    $res = curl_exec($ch);
+    $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    list($header, $body) = explode("\r\n\r\n", $res, 2);
+
+    return base64_encode($body);
+}
+
+/**
+* 生成群头像图片 尺寸45x45
+* @author XueFeng
+* @param array $pic_list 图片二进制数组
+* @return 图片加密后的二进制
+* **/
+function setnine($pic_list){
+
+    $pic_list = array_slice($pic_list, 0, 9); // 只操作前9个图片
+    $bg_w       = 150; // 背景图片宽度  
+    $bg_h       = 150; // 背景图片高度  
+  
+    $background = imagecreatetruecolor($bg_w,$bg_h); // 背景图片  
+    $color      = imagecolorallocate($background, 202, 201, 201); // 为真彩色画布创建白色背景，再设置为透明  
+    imagefill($background, 0, 0, $color);  
+    imageColorTransparent($background, $color);
+
+    $pic_count  = count($pic_list);  
+    
+    $lineArr    = array();  // 需要换行的位置  
+    $space_x    = 3;  
+    $space_y    = 3;  
+    $line_x     = 0;  
+    switch($pic_count) {  
+    case 1: // 正中间  
+        $start_x = intval($bg_w/4);  // 开始位置X  
+        $start_y = intval($bg_h/4);  // 开始位置Y  
+        $pic_w   = intval($bg_w/2); // 宽度  
+        $pic_h   = intval($bg_h/2); // 高度  
+        break;  
+    case 2: // 中间位置并排  
+        $start_x = 2;  
+        $start_y = intval($bg_h/4) + 3;  
+        $pic_w   = intval($bg_w/2) - 5;  
+        $pic_h   = intval($bg_h/2) - 5;  
+        $space_x = 5;  
+        break;  
+    case 3:  
+        $start_x = 40;   // 开始位置X  
+        $start_y = 5;    // 开始位置Y  
+        $pic_w   = intval($bg_w/2) - 5; // 宽度  
+        $pic_h   = intval($bg_h/2) - 5; // 高度  
+        $lineArr = array(2);  
+        $line_x  = 4;  
+        break;  
+    case 4:  
+        $start_x = 4;    // 开始位置X  
+        $start_y = 5;    // 开始位置Y  
+        $pic_w   = intval($bg_w/2) - 5; // 宽度  
+        $pic_h   = intval($bg_h/2) - 5; // 高度  
+        $lineArr = array(3);  
+        $line_x  = 4;  
+        break;  
+    case 5:  
+        $start_x = 30;   // 开始位置X  
+        $start_y = 30;   // 开始位置Y  
+        $pic_w   = intval($bg_w/3) - 5; // 宽度  
+        $pic_h   = intval($bg_h/3) - 5; // 高度  
+        $lineArr = array(3);  
+        $line_x  = 5;  
+        break;  
+    case 6:  
+        $start_x = 5;    // 开始位置X  
+        $start_y = 30;   // 开始位置Y  
+        $pic_w   = intval($bg_w/3) - 5; // 宽度  
+        $pic_h   = intval($bg_h/3) - 5; // 高度  
+        $lineArr = array(4);  
+        $line_x  = 5;  
+        break;  
+    case 7:  
+        $start_x = 53;   // 开始位置X  
+        $start_y = 5;    // 开始位置Y  
+        $pic_w   = intval($bg_w/3) - 5; // 宽度  
+        $pic_h   = intval($bg_h/3) - 5; // 高度  
+        $lineArr = array(2,5);  
+        $line_x  = 5;  
+        break;  
+    case 8:  
+        $start_x = 30;   // 开始位置X  
+        $start_y = 5;    // 开始位置Y  
+        $pic_w   = intval($bg_w/3) - 5; // 宽度  
+        $pic_h   = intval($bg_h/3) - 5; // 高度  
+        $lineArr = array(3,6);  
+        $line_x  = 5;  
+        break;  
+    case 9:  
+        $start_x = 5;    // 开始位置X  
+        $start_y = 5;    // 开始位置Y  
+        $pic_w   = intval($bg_w/3) - 5; // 宽度  
+        $pic_h   = intval($bg_h/3) - 5; // 高度  
+        $lineArr = array(4,7);  
+        $line_x  = 5;  
+        break;  
+    }
+    foreach( $pic_list as $k => $pic_base ) {
+        
+        $kk = $k + 1;
+        if ( in_array($kk, $lineArr) ) {  
+            $start_x = $line_x;  
+            $start_y = $start_y + $pic_h + $space_y;  
+        }
+
+        $pic_base = base64_decode($pic_base);
+        $resource = imagecreatefromstring($pic_base);
+        // $start_x,$start_y copy图片在背景中的位置
+        // 0,0 被copy图片的位置
+        // $pic_w,$pic_h copy后的高度和宽度
+        imagecopyresized($background,$resource,$start_x,$start_y,0,0,$pic_w,$pic_h,imagesx($resource),imagesy($resource));
+        //最后两个参数为原始图片宽度和高度，倒数两个参数为copy时的图片宽度和高度
+        $start_x  = $start_x + $pic_w + $space_x;
+    }
+
+    imagejpeg($background, "/tmp/nine.jpeg",100);
+    file_get_contents("/tmp/nine.jpeg");
+    
+    $url  = resize("/tmp/nine.jpeg", "139", "139");
+    $file = file_get_contents($url);
+    unlink("/tmp/nine.jpeg");
+    unlink($url);
+    return base64_encode($file);
+}
+
+function pdf2png($PDF,$Path,$xp = 120,$yp = 120,$quality = 100)
+{
+
+   if( !extension_loaded('imagick') ) {
+       return false;
+   }
+
+   if( !file_exists($PDF) ) {
+       return false;
+   }
+
+   $IM = new imagick($PDF);
+   $IM->setImageBackgroundColor('#ffffff');
+   $IM->setResolution($xp,$yp);
+   $IM->setCompressionQuality($quality);
+   //$IM->readImage($PDF);
+   $IM = $IM->flattenImages();
+
+   $Return = [];
+
+   foreach($IM as $Key => $Var) {
+       $Var->setImageFormat('png');
+       $Filename = $Path.'/'.uniqid().rand(1000,9999).'.png';
+       if( $Var->writeImage($Filename) == true ){
+           $Return[]= $Filename;
+       }else{
+            $ERR[] = $Key;
+       }
+   }
+
+
+
+   return $Return;
+}
+function objectToArray($obj){
+
+    $arr = is_object($obj) ? get_object_vars($obj) : $obj;
+    if(is_array($arr)){
+        return array_map(__FUNCTION__, $arr);
+    }else{
+        return $arr;
+    }
+}
