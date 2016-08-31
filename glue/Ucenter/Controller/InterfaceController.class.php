@@ -121,7 +121,7 @@ class InterfaceController extends GlueApiCommonController
         }
 
         $array = [];
-        //$array['cid']  = $this->cid;
+        
         $array['uids'] = $uidList;
 
         $Organ = Auth::factory('Organ');
@@ -166,5 +166,4 @@ class InterfaceController extends GlueApiCommonController
 
         $this->apiToJson($result);
     }
-
 }
